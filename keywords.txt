@@ -1,0 +1,30 @@
+#######################################
+# Syntax Coloring Map For PicoButtonAsync
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DebounceManager	KEYWORD1
+PicoButton	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+addPin	KEYWORD2
+getSafeState	KEYWORD2
+checkChord	KEYWORD2
+isPressed	KEYWORD2
+justPressed	KEYWORD2
+justReleased	KEYWORD2
+justLongPressed	KEYWORD2
+repeat	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+DEBOUNCE_SAMPLES	LITERAL1
