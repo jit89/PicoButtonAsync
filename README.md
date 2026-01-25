@@ -21,8 +21,13 @@ Built on the Raspberry Pi Pico SDK `async_context` architecture with the followi
 
 ### 4. Multi-Core and Interrupt Safe
 Safe for dual-core use in RP2040/RP2350:
-* **Hardware Spinlocks:** Internally uses SDK critical sections (`critical_section_t`) to prevent data corruption when Core 0 and Core 1 access button states simultaneously.
+* **Hardware Spinlocks:** Internally uses SDK critical sections (`critical_section_t`) to prevent data corruption when **Core 0** and **Core 1** access button states simultaneously.
 * **ISR Safe:** Safely checks button states inside other interrupts or high-priority tasks without causing system deadlocks.
+
+### 5. Simple and Clean User API
+* No `update()` function/method calls in the main `void loop()` to update the internal state of the button debouncer.
+* Polling the button state is handled internally by the class using a timer and `millis()` function.
+* Simple function names like `justPressed()`, `justReleased()` to catch falling and rising edges.
 
 ## 🛠 API Usage
 
@@ -51,7 +56,7 @@ The user-facing interface for individual pins.
 ## 💻 Basic Example
 
 ```cpp
-#include "PicoButtonAsync.h"
+#include <PicoButtonAsync.h>
 
 // 1. Initialize the manager (5ms sampling)
 DebounceManager debouncer(5);
@@ -97,6 +102,8 @@ On the RP2040 and RP2350, hardware interrupts are tied to the core that enabled 
 
 - If you call `debouncer.begin()` inside `setup1()`, the ISR will execute on **Core 1**. This allows you to offload all button sampling overhead to a specific core, ensuring your primary application timing remains jitter-free.
 
+- This is not a very lightweight library. The library ensures thread safety and reliability in a multi-core environment while trying to be as fast as possible while minimising interference with other Wi-Fi/USB stacks present in the pico C SDK. If you want to look for ultra-low memory button debouncing library, you should go with one that has a lower total memory footprint.
+
 ## ⚠️ Important Notes
 
 - **Active-Low Logic:** This library assumes a standard wiring configuration where the button connects the GPIO to GND. It automatically enables internal PULLUP resistors.
@@ -104,3 +111,19 @@ On the RP2040 and RP2350, hardware interrupts are tied to the core that enabled 
 - **The Ghost Guard:** Includes logic that automatically resets timers if a button is physically released during a long loop() delay. This prevents a quick tap from being misread as a "Long Press" if the CPU was occupied elsewhere.
 
 - **Sample Window:** To calculate the total debounce time, multiply interval_ms by DEBOUNCE_SAMPLES (default is 8). With 5ms intervals, the button must be stable for 40ms to trigger a state change.
+
+## Theoretical Overview
+
+The main driver logic of the code is based on:
+
+- **A Guide to Debouncing** by Jack Ganssle
+    - https://www.ganssle.com/debouncing.pdf
+    - https://www.ganssle.com/debouncing-pt2.htm
+
+- High Level API (C-SDK) for Raspberry Pi Pico:
+    - [**`async_context`**](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#group_pico_async_context)
+    - [**`critical_section_t`**](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#group_pico_async_context)
+
+ ## Credits
+ - [Jack Ganssle](https://www.ganssle.com/debouncing.pdf)
+ - [Earle Philhower](https://github.com/earlephilhower/arduino-pico)
