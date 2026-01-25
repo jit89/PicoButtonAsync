@@ -103,8 +103,9 @@ On the RP2040 and RP2350, hardware interrupts are tied to the core that enabled 
 - If you call `debouncer.begin()` inside `setup1()`, the ISR will execute on **Core 1**. This allows you to offload all button sampling overhead to a specific core, ensuring your primary application timing remains jitter-free.
 
 - This is not a very lightweight library:
-    - The library ensures thread safety and reliability in a multi-core environment while trying to be as fast as possible while minimising interference with other software stacks present in the pico C SDK.
+    - The library ensures thread safety and reliability in a multi-core environment while trying to be as fast as possible while alsominimising interference with other software stacks present in the pico C SDK.
     - If you want to look for a ultra-low memory button debouncing library, you should go with one that has a lower total memory footprint.
+  - Even though the functions of the `PicoButton` class are safe to be called from within the ISR, it is not recommended. The ISR should be as short as possible and functions like `justLongPressed` should not be used from within the ISR.
 
 ## ⚠️ Important Notes
 
