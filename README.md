@@ -114,7 +114,7 @@ On the RP2040 and RP2350, hardware interrupts are tied to the core that enabled 
 
 - **Sample Window:** To calculate the total debounce time, multiply interval_ms by DEBOUNCE_SAMPLES (default is 8). With 5ms intervals, the button must be stable for 40ms to trigger a state change.
 
-## Theoretical Overview
+## 📚 Theoretical Overview
 
 The main driver logic of the code is based on:
 
@@ -126,6 +126,6 @@ The main driver logic of the code is based on:
     - [**`async_context`**](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#group_pico_async_context)
     - [**`critical_section_t`**](https://www.raspberrypi.com/documentation/pico-sdk/high_level.html#group_pico_async_context)
 
- ## Credits
+ ## 🤝 Credits & Acknowledgments
  - [Jack Ganssle](https://www.ganssle.com/debouncing.pdf)
  - [Earle Philhower](https://github.com/earlephilhower/arduino-pico)
