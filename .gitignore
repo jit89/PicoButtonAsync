@@ -1,0 +1,38 @@
+# --- Arduino / Philhower Core ---
+# Ignore build artifacts from the Arduino IDE
+build/
+bin/
+*.hex
+*.elf
+*.bin
+*.uf2
+*.map
+
+# --- VS Code / PlatformIO ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+.pio/
+.clangd/
+
+# --- CMake / Pico SDK (if used) ---
+generated/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+*.cmake
+pico_sdk_import.cmake
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Temporary / Swap files ---
+*.swp
+*~
+*.log
+*.tmp
