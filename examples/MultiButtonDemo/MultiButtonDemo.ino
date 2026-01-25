@@ -28,7 +28,7 @@ void setup() {
   while (!Serial) delay(10);
 
   Serial.println("--- PicoButtonAsync Chord Demo ---");
-  Serial.println("Press A (G14) and B (G15) together for the secret action!");
+  Serial.println("Press A (G14) and B (G15) together for the chord action!");
 
   debouncer.begin();
 }
