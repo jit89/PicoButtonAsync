@@ -35,14 +35,14 @@ jobs:
           mkdir -p $HOME/Arduino/libraries
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/PicoButtonAsync
 
-      - name: Compile SerialDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/SerialDemo/SerialDemo.ino
+      - name: Compile BasicSerialDemo
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/BasicSerialDemo/BasicSerialDemo.ino
 
-      - name: Compile ChordDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/ChordDemo/ChordDemo.ino
+      - name: Compile MultiButtonDemo
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MultiButtonDemo/MultiButtonDemo.ino
 
       - name: Compile MulticoreDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MulticoreDemo/MulticoreDemo.ino
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MultiCoreDemo/MultiCoreDemo.ino
 
       - name: Compile MemoryUsage
         run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MemoryUsage/MemoryUsage.ino
