@@ -14,7 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         board:
-          - "rp2040:rp2040:pico"
+          - "rp2040:rp2040:rpipico"
           - "rp2040:rp2040:rpipico2"
 
     steps:
