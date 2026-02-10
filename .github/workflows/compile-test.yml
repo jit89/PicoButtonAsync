@@ -11,38 +11,52 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        # Test against both the original Pico and the new Pico 2 (RP2350)
         board:
-          - "rp2040:rp2040:rpipico"
-          - "rp2350:rp2350:rpipico2"
+          - "rp2040:rp2040:pico"
+          - "rp2040:rp2040:rpipico2"
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Dependencies
+        run: pip3 install pyserial
+
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v2
 
+      # --- NEW CACHE STEP ---
+      - name: Cache Arduino Core
+        id: cache-arduino
+        uses: actions/cache@v4
+        with:
+          path: ~/.arduino15/packages/rp2040
+          key: ${{ runner.os }}-arduino-pico-core
+          restore-keys: |
+            ${{ runner.os }}-arduino-pico-core
+
       - name: Install Earle Philhower Core
+        # This step only runs if the cache wasn't found (cache-hit != 'true')
+        if: steps.cache-arduino.outputs.cache-hit != 'true'
         run: |
           arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
           arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
 
       - name: Install Library
         run: |
-          # Create libraries folder and link this repo so arduino-cli can find it
           mkdir -p $HOME/Arduino/libraries
           ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/PicoButtonAsync
 
-      - name: Compile BasicSerialDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/BasicSerialDemo/BasicSerialDemo.ino
-
-      - name: Compile MultiButtonDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MultiButtonDemo/MultiButtonDemo.ino
-
-      - name: Compile MulticoreDemo
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MultiCoreDemo/MultiCoreDemo.ino
-
-      - name: Compile MemoryUsage
-        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MemoryUsage/MemoryUsage.ino
+      - name: Compile All Examples
+        run: |
+          for example in examples/*/*.ino; do
+            echo "Compiling $example..."
+            arduino-cli compile --fqbn ${{ matrix.board }} "$example"
+          done
