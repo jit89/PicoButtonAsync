@@ -14,8 +14,8 @@ jobs:
       matrix:
         # Test against both the original Pico and the new Pico 2 (RP2350)
         board:
-          - "rp2040:rp2040:pico"
-          - "rp2040:rp2040:pico2"
+          - "rp2040:rp2040:rpipico"
+          - "rp2350:rp2350:rpipico2"
 
     steps:
       - name: Checkout Code
