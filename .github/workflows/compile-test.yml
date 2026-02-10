@@ -1,0 +1,48 @@
+name: Compile Examples
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        # Test against both the original Pico and the new Pico 2 (RP2350)
+        board:
+          - "rp2040:rp2040:pico"
+          - "rp2040:rp2040:pico2"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install Earle Philhower Core
+        run: |
+          arduino-cli core update-index --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          arduino-cli core install rp2040:rp2040 --additional-urls https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+
+      - name: Install Library
+        run: |
+          # Create libraries folder and link this repo so arduino-cli can find it
+          mkdir -p $HOME/Arduino/libraries
+          ln -s $GITHUB_WORKSPACE $HOME/Arduino/libraries/PicoButtonAsync
+
+      - name: Compile SerialDemo
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/SerialDemo/SerialDemo.ino
+
+      - name: Compile ChordDemo
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/ChordDemo/ChordDemo.ino
+
+      - name: Compile MulticoreDemo
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MulticoreDemo/MulticoreDemo.ino
+
+      - name: Compile MemoryUsage
+        run: arduino-cli compile --fqbn ${{ matrix.board }} ./examples/MemoryUsage/MemoryUsage.ino
