@@ -1,3 +1,7 @@
+![Build Status](https://img.shields.io/github/actions/workflow/status/jit89/PicoButtonAsync/compile-test.yml?label=build)
+![Latest Release](https://img.shields.io/github/v/release/jit89/PicoButtonAsync?color=blue)
+![License](https://img.shields.io/github/license/jit89/PicoButtonAsync)
+
 # PicoButtonAsync
 
 A fast, multicore-safe button management library for the **RP2040** and **RP2350** (Raspberry Pi Pico/Pico 2). This library is designed for projects requiring reliability, non-interference with other hardware resources (e.g Timers, Wi-Fi/USB stack etc), and low-latency input detection that does not block the main execution loop.
