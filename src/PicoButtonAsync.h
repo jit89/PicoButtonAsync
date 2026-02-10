@@ -164,7 +164,12 @@ public:
     return false;
   }
 
-  /** @brief Repeated triggers while held. */
+  /**
+  * @brief Checks if the button is currently held down.
+  * This is a non-blocking check of the last debounced state.
+  * Simulates repeated triggers every interval_ms.
+  * @return true if the button is pressed (logic low) for delay_ms amount of time.
+  */
   bool repeat(uint32_t delay_ms = 500, uint32_t interval_ms = 100) {
     bool current = isPressed();
     if (current && _pressStartTime > 0 && (_now() - _pressStartTime >= delay_ms)) {
