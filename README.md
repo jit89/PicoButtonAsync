@@ -33,6 +33,12 @@ Safe for dual-core use in RP2040/RP2350:
 * Polling the button state is handled internally by the class using a timer and `millis()` function.
 * Simple function names like `justPressed()`, `justReleased()` to catch falling and rising edges.
 
+### 6. Low Latency (`useInterrupt=true`)
+When a button is pressed, the IRQ fires and the background thread runs `tick()` almost immediately. This bypasses the wait for the next 5ms timer cycle.
+
+### 7. Low Power/Noise (`useInterrupt=false`)
+For pins prone to electromagnetic interference, the interrupts can be switched off (default). The system will simply sample at the fixed `interval_ms`.
+
 ## 🛠 API Usage
 
 ### `DebounceManager`
@@ -42,7 +48,6 @@ The background engine that samples and filters noise.
 | Method | Description |
 | --- | --- |
 | **`DebounceManager(interval_ms)`** | Initialize with a sampling rate (default is 5ms). |
-|**`begin()`** | Starts the background sampling task. |
 | **`getSafeState()`** | Returns the raw 32-bit debounced bitmask. |
 | **`checkChord(mask)`** | Returns `true` if all pins in the provided mask are held simultaneously. |
 
@@ -67,7 +72,7 @@ DebounceManager debouncer(5);
 
 // 2. Define your buttons on specific GPIO pins
 PicoButton btnA(debouncer, 14);
-PicoButton btnB(debouncer, 15);
+PicoButton btnB(debouncer, 15, true); // Use Interrupts on pin 15
 
 void setup() {
     Serial.begin(115200);
@@ -108,7 +113,7 @@ On the RP2040 and RP2350, hardware interrupts are tied to the core that enabled 
 
 - This is not a very lightweight library:
     - The library ensures thread safety and reliability in a multi-core environment while trying to be as fast as possible while alsominimising interference with other software stacks present in the pico C SDK.
-    - If you want to look for a ultra-low memory button debouncing library, you should go with one that has a lower total memory footprint.
+    - If you want an ultra-low memory button debouncing library, you should choose one that has a lower total memory footprint than this implementation.
   - Even though the functions of the `PicoButton` class are safe to be called from within the ISR, it is not recommended. The ISR should be as short as possible and functions like `justLongPressed` should not be used from within the ISR.
 
 ## ⚠️ Important Notes
