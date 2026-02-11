@@ -3,6 +3,8 @@
 
 #include "pico/stdlib.h"
 #include "pico/async_context_threadsafe_background.h"
+#include "pico/sync.h"
+#include "hardware/gpio.h"
 #include <string.h>
 
 #ifndef DEBOUNCE_SAMPLES
@@ -18,22 +20,31 @@ private:
   uint32_t _mask = 0;
   uint32_t _interval_ms;
 
+  static DebounceManager *s_active_instance;
+
   static void _worker_callback(async_context_t *context, async_at_time_worker_t *worker) {
     DebounceManager *instance = (DebounceManager *)worker->user_data;
     instance->tick();
     async_context_add_at_time_worker_in_ms(context, worker, instance->_interval_ms);
   }
 
+  static void _gpio_irq_bridge(uint gpio, uint32_t events) {
+    if (s_active_instance) {
+      // Nudge the async context to run the worker immediately.
+      async_context_add_at_time_worker_in_ms(s_active_instance->_context,
+                                             &s_active_instance->_worker,
+                                             0);
+    }
+  }
+
   static async_context_t *_get_default_context() {
     static async_context_threadsafe_background_t shared_bg_context;
     static bool initialized = false;
-
-    // Disable Interrupts while initializing context.
     uint32_t status = save_and_disable_interrupts();
     if (!initialized) {
 #if LIB_PICO_CYW43_ARCH
       async_context_t *wifi_ctx = cyw43_arch_async_context();
-      if (wifi_ctx){
+      if (wifi_ctx) {
         restore_interrupts(status);
         return wifi_ctx;
       }
@@ -44,6 +55,7 @@ private:
     restore_interrupts(status);
     return &shared_bg_context.core;
   }
+
 public:
   volatile uint32_t currentState = 0xFFFFFFFF;
 
@@ -53,32 +65,45 @@ public:
     memset(_history, 0xFF, sizeof(_history));
     _worker.do_work = _worker_callback;
     _worker.user_data = this;
+    s_active_instance = this;
   }
 
   void begin() {
     async_context_add_at_time_worker_in_ms(_context, &_worker, _interval_ms);
   }
 
-  void addPin(int pin) {
+  /**
+     * @param pin The GPIO pin
+     * @param useInterrupt If true, uses GPIO IRQs to trigger an immediate debounce check.
+     */
+  void addPin(int pin, bool useInterrupt = false) {
     gpio_init(pin);
     gpio_set_dir(pin, GPIO_IN);
     gpio_pull_up(pin);
 
     async_context_acquire_lock_blocking(_context);
     _mask |= (1UL << pin);
+
+    if (useInterrupt) {
+      // Attach the global bridge to this pin
+      gpio_set_irq_enabled_with_callback(pin, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &_gpio_irq_bridge);
+    }
     async_context_release_lock(_context);
   }
 
   void tick() {
     _history[_index] = gpio_get_all() & _mask;
     _index = (_index + 1) % DEBOUNCE_SAMPLES;
-    uint32_t stableHigh = 0xFFFFFFFF, stableLow = 0;
 
+    uint32_t stableHigh = 0xFFFFFFFF, stableLow = 0;
     for (uint8_t i = 0; i < DEBOUNCE_SAMPLES; i++) {
       stableHigh &= _history[i];
       stableLow |= _history[i];
     }
+
+    async_context_acquire_lock_blocking(_context);
     currentState = (currentState | (stableHigh & _mask)) & (stableLow | ~_mask);
+    async_context_release_lock(_context);
   }
 
   uint32_t getSafeState() {
@@ -93,6 +118,9 @@ public:
   }
 };
 
+// Initialize the static pointer
+DebounceManager *DebounceManager::s_active_instance = nullptr;
+
 class PicoButton {
 protected:
   DebounceManager &_mgr;
@@ -102,7 +130,7 @@ protected:
 
   /*
   Separate trackers so that the press and release
-  functions don't "steal" the edge from each other.
+  functions don't "steal" the edge from each other
   */
 
   bool _lastPressCheck = false;
@@ -114,10 +142,20 @@ protected:
   }
 
 public:
-  PicoButton(DebounceManager &mgr, int pin)
+  /**
+  * @param mgr Reference to the DebounceManager
+  * @param pin GPIO number
+  * @param useInterrupt Whether to use IRQs for zero-latency wakeup
+  */
+  PicoButton(DebounceManager &mgr, int pin, bool useInterrupt = false)
     : _mgr(mgr), _pinMask(1UL << pin) {
-    _mgr.addPin(pin);
+
+    _mgr.addPin(pin, useInterrupt);
+
+    // Start the manager
+    _mgr.begin();
   }
+
   virtual bool isPressed() {
     return !(_mgr.getSafeState() & _pinMask);
   }
