@@ -28,14 +28,20 @@ private:
     static async_context_threadsafe_background_t shared_bg_context;
     static bool initialized = false;
 
+    // Disable Interrupts while initializing context.
+    uint32_t status = save_and_disable_interrupts();
     if (!initialized) {
 #if LIB_PICO_CYW43_ARCH
       async_context_t *wifi_ctx = cyw43_arch_async_context();
-      if (wifi_ctx) return wifi_ctx;
+      if (wifi_ctx){
+        restore_interrupts(status);
+        return wifi_ctx;
+      }
 #endif
       async_context_threadsafe_background_init_with_defaults(&shared_bg_context);
       initialized = true;
     }
+    restore_interrupts(status);
     return &shared_bg_context.core;
   }
 public:
